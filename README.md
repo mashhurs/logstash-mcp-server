@@ -1,9 +1,9 @@
 # IMPORTANT
-This repository is vibe coded, AI generated and no tested properly. Use it with your own risk.
+This repository is vibe coded, AI generated and not tested properly. Use it with your own risk.
 
 # Logstash MCP Server
 
-A Model Context Protocol (MCP) server for interacting with Logstash instances. This server provides comprehensive tools for monitoring, configuration management, and pipeline operations.
+A Model Context Protocol (MCP) server for interacting with Logstash instances. This server provides comprehensive tools for monitoring and defining Logstash instance performance bottleneck.
 
 ## Web UI
 

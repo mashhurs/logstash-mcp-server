@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "logstash": {
+      "command": "python3",
+      "args": ["logstash_mcp_server.py"],
+      "env": {
+        "LOGSTASH_API_BASE": "http://localhost:9600"
+      }
+    }
+  }
+}

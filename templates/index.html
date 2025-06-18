@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logstash MCP Server - Web UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-running {
+            background-color: #28a745;
+        }
+
+        .status-stopped {
+            background-color: #dc3545;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .tool-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+        }
+
+        .tool-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .tool-card p {
+            color: #6c757d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .tool-inputs {
+            margin: 15px 0;
+        }
+
+        .tool-inputs input, .tool-inputs select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .output-box {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Logstash MCP Server</h1>
+            <p>Web Interface for Logstash Monitoring</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Server Status Section -->
+            <div class="status-section">
+                <h2 class="section-title">Server Status</h2>
+                <div id="server-status">
+                    <span class="status-indicator status-stopped"></span>
+                    <span id="status-text">MCP Server Stopped</span>
+                </div>
+                <button id="start-server-btn" class="btn btn-success" onclick="startServer()">Start MCP Server</button>
+                <button id="refresh-tools-btn" class="btn btn-primary" onclick="loadTools()" disabled>Refresh Tools</button>
+            </div>
+
+            <!-- Tools Section -->
+            <div id="tools-section" style="display: none;">
+                <h2 class="section-title" id="tools-title">Available Tools</h2>
+                <div id="tools-grid" class="tools-grid">
+                    <!-- Tools will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="output-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="section-title" style="margin-bottom: 0;">Output</h2>
+                    <button class="btn btn-primary" onclick="clearOutput()" style="background-color: #6c757d; font-size: 14px; padding: 8px 16px;">
+                        🗑️ Clear Output
+                    </button>
+                </div>
+                <div id="output" class="output-box">
+                    Welcome to Logstash MCP Server Web UI!
+                    
+Click "Start MCP Server" to begin.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let serverRunning = false;
+        let serverInitialized = false;
+
+        // Check server status on page load
+        window.onload = function() {
+            checkServerStatus();
+        };
+
+        function addOutput(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
+            output.textContent += `\n[${timestamp}] ${prefix} ${message}`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            const output = document.getElementById('output');
+            output.textContent = 'Output cleared.\n\nReady for new operations...';
+
+            // Add a small visual feedback
+            const clearBtn = event.target;
+            const originalText = clearBtn.innerHTML;
+            clearBtn.innerHTML = '✅ Cleared';
+            clearBtn.style.backgroundColor = '#28a745';
+
+            setTimeout(() => {
+                clearBtn.innerHTML = originalText;
+                clearBtn.style.backgroundColor = '#6c757d';
+            }, 1500);
+        }
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/server_status');
+                const data = await response.json();
+                updateServerStatus(data.running, data.initialized);
+            } catch (error) {
+                console.error('Error checking server status:', error);
+            }
+        }
+
+        function updateServerStatus(running, initialized) {
+            serverRunning = running;
+            serverInitialized = initialized;
+            
+            const statusIndicator = document.querySelector('.status-indicator');
+            const statusText = document.getElementById('status-text');
+            const startBtn = document.getElementById('start-server-btn');
+            const refreshBtn = document.getElementById('refresh-tools-btn');
+            
+            if (running && initialized) {
+                statusIndicator.className = 'status-indicator status-running';
+                statusText.textContent = 'MCP Server Running & Initialized';
+                startBtn.disabled = true;
+                refreshBtn.disabled = false;
+                loadTools();
+            } else if (running) {
+                statusIndicator.className = 'status-indicator status-running';
+                statusText.textContent = 'MCP Server Starting...';
+                startBtn.disabled = true;
+                refreshBtn.disabled = true;
+            } else {
+                statusIndicator.className = 'status-indicator status-stopped';
+                statusText.textContent = 'MCP Server Stopped';
+                startBtn.disabled = false;
+                refreshBtn.disabled = true;
+                document.getElementById('tools-section').style.display = 'none';
+            }
+        }
+
+        async function startServer() {
+            addOutput('Starting MCP server...');
+            
+            try {
+                const response = await fetch('/start_server', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addOutput('MCP server started successfully!', 'success');
+                    updateServerStatus(true, data.initialized);
+                    setTimeout(checkServerStatus, 1000); // Double-check status
+                } else {
+                    addOutput('Failed to start MCP server', 'error');
+                }
+            } catch (error) {
+                addOutput(`Error starting server: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadTools() {
+            addOutput('Loading available tools...');
+            
+            try {
+                const response = await fetch('/list_tools');
+                const data = await response.json();
+                
+                if (data.result && data.result.tools) {
+                    displayTools(data.result.tools);
+                    addOutput(`Loaded ${data.result.tools.length} tools successfully!`, 'success');
+                } else if (data.error) {
+                    addOutput(`Error loading tools: ${data.error.message || data.error}`, 'error');
+                } else {
+                    addOutput('No tools available', 'error');
+                }
+            } catch (error) {
+                addOutput(`Error loading tools: ${error.message}`, 'error');
+            }
+        }
+
+        function displayTools(tools) {
+            const toolsGrid = document.getElementById('tools-grid');
+            const toolsSection = document.getElementById('tools-section');
+            const toolsTitle = document.getElementById('tools-title');
+            
+            toolsGrid.innerHTML = '';
+            
+            tools.forEach(tool => {
+                const toolCard = createToolCard(tool);
+                toolsGrid.appendChild(toolCard);
+            });
+            
+            toolsTitle.textContent = `Available Tools (${tools.length})`;
+            toolsSection.style.display = 'block';
+        }
+
+        function createToolCard(tool) {
+            const card = document.createElement('div');
+            card.className = 'tool-card';
+            
+            // Convert URLs in description to clickable links
+            let description = tool.description;
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            description = description.replace(urlRegex, '<a href="$1" target="_blank" style="color: #007bff; text-decoration: underline; word-break: break-all;">📚 Documentation</a>');
+            
+            let inputsHtml = '';
+            const schema = tool.inputSchema;
+            
+            if (schema && schema.properties) {
+                inputsHtml = '<div class="tool-inputs">';
+                for (const [propName, propSchema] of Object.entries(schema.properties)) {
+                    if (propSchema.type === 'boolean') {
+                        inputsHtml += `
+                            <label>
+                                <input type="checkbox" id="${tool.name}_${propName}" ${propSchema.default ? 'checked' : ''}>
+                                ${propName} (${propSchema.description || 'Boolean parameter'})
+                            </label>
+                        `;
+                    } else if (propSchema.type === 'integer') {
+                        inputsHtml += `
+                            <input type="number" id="${tool.name}_${propName}" placeholder="${propName}" 
+                                   value="${propSchema.default || ''}" 
+                                   title="${propSchema.description || 'Integer parameter'}">
+                        `;
+                    } else {
+                        inputsHtml += `
+                            <input type="text" id="${tool.name}_${propName}" placeholder="${propName}" 
+                                   title="${propSchema.description || 'String parameter'}">
+                        `;
+                    }
+                }
+                inputsHtml += '</div>';
+            }
+            
+            card.innerHTML = `
+                <h3>${tool.name}</h3>
+                <p>${description}</p>
+                ${inputsHtml}
+                <button class="btn btn-primary" onclick="callTool('${tool.name}')">Execute</button>
+            `;
+            
+            return card;
+        }
+
+        async function callTool(toolName) {
+            addOutput(`Executing tool: ${toolName}...`);
+            
+            // Collect arguments from inputs
+            const arguments = {};
+            const inputs = document.querySelectorAll(`[id^="${toolName}_"]`);
+            
+            inputs.forEach(input => {
+                const paramName = input.id.replace(`${toolName}_`, '');
+                if (input.type === 'checkbox') {
+                    arguments[paramName] = input.checked;
+                } else if (input.type === 'number') {
+                    if (input.value) arguments[paramName] = parseInt(input.value);
+                } else if (input.value) {
+                    arguments[paramName] = input.value;
+                }
+            });
+            
+            try {
+                const response = await fetch('/call_tool', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: toolName,
+                        arguments: arguments
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.result && data.result.content) {
+                    const content = data.result.content[0].text;
+                    addOutput(`✅ ${toolName} result:\n${content}`, 'success');
+                } else if (data.error) {
+                    addOutput(`❌ ${toolName} error: ${data.error.message || JSON.stringify(data.error)}`, 'error');
+                } else {
+                    addOutput(`❓ ${toolName} - unexpected response: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                addOutput(`❌ Error calling ${toolName}: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

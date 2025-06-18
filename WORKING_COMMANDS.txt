@@ -1,0 +1,57 @@
+EXACT WORKING MCP COMMANDS
+==========================
+
+⚠️  CRITICAL: Copy each command exactly as shown below.
+⚠️  Send ONE command at a time and wait for response.
+
+1️⃣  INITIALIZATION (REQUIRED FIRST):
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}
+
+2️⃣  LIST TOOLS:
+{"jsonrpc":"2.0","id":1,"method":"tools/list"}
+
+3️⃣  HEALTH CHECK:
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"logstash_health_check","arguments":{}}}
+
+4️⃣  NODE INFO:
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"logstash_node_info","arguments":{}}}
+
+5️⃣  CONNECTIVITY CHECK:
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"logstash_check_connectivity","arguments":{}}}
+
+6️⃣  NODE STATISTICS:
+{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"logstash_node_stats","arguments":{"human":true}}}
+
+7️⃣  PIPELINE STATISTICS:
+{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"logstash_pipelines_stats","arguments":{"human":true}}}
+
+USAGE INSTRUCTIONS:
+==================
+1. Start server: python3 logstash_mcp_server.py
+2. Copy the INITIALIZATION command above
+3. Paste it and press Enter
+4. Wait for response (should show success)
+5. Copy the LIST TOOLS command
+6. Paste it and press Enter
+7. Copy any other command you want to test
+
+EXPECTED RESPONSES:
+==================
+✅ Initialization: {"jsonrpc":"2.0","id":0,"result":{"capabilities":{},"serverInfo":{"name":"logstash-mcp","version":"1.0.0"}}}
+✅ List tools: {"jsonrpc":"2.0","id":1,"result":{"tools":[...]}}
+✅ Tool calls: {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"..."}]}}
+
+TROUBLESHOOTING:
+===============
+❌ If you still get "initialization required" error:
+   - Make sure you sent the initialization command FIRST
+   - Check that you copied the EXACT command above
+   - Ensure each command is on ONE line
+
+❌ If you get JSON parse errors:
+   - Don't add spaces or line breaks
+   - Copy the exact command as one continuous line
+
+❌ If Logstash connection fails:
+   - Ensure Logstash is running on localhost:9600
+   - Try the connectivity check command first
